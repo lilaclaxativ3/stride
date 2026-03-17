@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRIDE Threat Modeling Flow Diagram</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0e1a;
+            color: #e0e6f0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .download-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(99, 179, 237, 0.2);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .download-bar h3 {
+            color: #63b3ed;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #63b3ed, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(66, 153, 225, 0.5);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .btn-download.downloading {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            pointer-events: none;
+        }
+
+        #diagram {
+            padding: 80px 40px 60px;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #0a0e1a;
+        }
+
+        .main-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .main-title h1 {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #63b3ed, #b794f4, #f687b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .main-title .subtitle {
+            font-size: 16px;
+            color: #718096;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .main-title .desc {
+            font-size: 13px;
+            color: #4a5568;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #63b3ed33, #b794f433, transparent);
+            margin: 40px 0;
+            border-radius: 2px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #e2e8f0;
+            margin-bottom: 25px;
+            padding-left: 18px;
+            border-left: 4px solid #63b3ed;
+            letter-spacing: 1px;
+        }
+
+        .section-title span {
+            color: #718096;
+            font-weight: 400;
+            font-size: 14px;
+            display: block;
+            margin-top: 4px;
+            letter-spacing: 0;
+        }
+
+        /* Architecture Diagram */
+        .arch-container {
+            position: relative;
+            background: linear-gradient(180deg, #0d1225 0%, #111a33 100%);
+            border: 1px solid #1e2d4a;
+            border-radius: 16px;
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        .trust-boundary {
+            border: 2px dashed;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .trust-boundary .tb-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .tb-external {
+            border-color: #fc8181;
+            background: rgba(252, 129, 129, 0.03);
+        }
+
+        .tb-external .tb-label {
+            background: #fc8181;
+            color: #1a0000;
+        }
+
+        .tb-dmz {
+            border-color: #f6ad55;
+            background: rgba(246, 173, 85, 0.03);
+        }
+
+        .tb-dmz .tb-label {
+            background: #f6ad55;
+            color: #1a0e00;
+        }
+
+        .tb-app {
+            border-color: #68d391;
+            background: rgba(104, 211, 145, 0.03);
+        }
+
+        .tb-app .tb-label {
+            background: #68d391;
+            color: #001a0a;
+        }
+
+        .tb-data {
+            border-color: #63b3ed;
+            background: rgba(99, 179, 237, 0.03);
+        }
+
+        .tb-data .tb-label {
+            background: #63b3ed;
+            color: #001a33;
+        }
+
+        .tb-mgmt {
+            border-color: #b794f4;
+            background: rgba(183, 148, 244, 0.03);
+        }
+
+        .tb-mgmt .tb-label {
+            background: #b794f4;
+            color: #0d001a;
+        }
+
+        .component-row {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #1a2332, #1e293b);
+            border: 1px solid #2d3a4f;
+            border-radius: 10px;
+            padding: 14px 18px;
+            min-width: 180px;
+            max-width: 240px;
+            flex: 1;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .component:hover {
+            border-color: #63b3ed;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 179, 237, 0.1);
+        }
+
+        .component .comp-icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .component .comp-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .component .comp-detail {
+            font-size: 10px;
+            color: #718096;
+            line-height: 1.4;
+        }
+
+        .component .stride-tags {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .stride-tag {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tag-s {
+            background: #fc818133;
+            color: #fc8181;
+        }
+
+        .tag-t {
+            background: #f6ad5533;
+            color: #f6ad55;
+        }
+
+        .tag-r {
+            background: #f6e05e33;
+            color: #f6e05e;
+        }
+
+        .tag-i {
+            background: #68d39133;
+            color: #68d391;
+        }
+
+        .tag-d {
+            background: #63b3ed33;
+            color: #63b3ed;
+        }
+
+        .tag-e {
+            background: #b794f433;
+            color: #b794f4;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: #4a5568;
+            font-size: 20px;
+            margin: 8px 0;
+            letter-spacing: 4px;
+        }
+
+        .flow-arrow span {
+            font-size: 10px;
+            color: #718096;
+            display: block;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .wide-component {
+            max-width: 100%;
+            min-width: auto;
+        }
+
+        /* STRIDE Detail Cards */
+        .stride-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .stride-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stride-card {
+            background: linear-gradient(135deg, #0d1225, #111a33);
+            border: 1px solid #1e2d4a;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stride-card:hover {
+            border-color: #2d3a4f;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stride-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #1e2d4a;
+        }
+
+        .stride-letter {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .stride-header-text h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stride-header-text .property {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .stride-header-text .question {
+            font-size: 12px;
+            color: #a0aec0;
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .stride-body {
+            padding: 20px 24px;
+        }
+
+        .stride-section {
+            margin-bottom: 16px;
+        }
+
+        .stride-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .stride-section h4 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #1e2d4a;
+        }
+
+        .threat-list,
+        .mitigation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .threat-list li,
+        .mitigation-list li {
+            font-size: 11px;
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+            color: #a0aec0;
+            line-height: 1.5;
+        }
+
+        .threat-list li::before {
+            content: '⚠';
+            position: absolute;
+            left: 0;
+            font-size: 10px;
+        }
+
+        .mitigation-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .where-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .where-tag {
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #1a2332;
+            border: 1px solid #2d3a4f;
+            color: #a0aec0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Card colors */
+        .card-s .stride-header {
+            background: linear-gradient(135deg, rgba(252, 129, 129, 0.1), transparent);
+        }
+
+        .card-s .stride-letter {
+            background: #fc818133;
+            color: #fc8181;
+        }
+
+        .card-s .stride-header-text h3 {
+            color: #fc8181;
+        }
+
+        .card-s .stride-section h4 {
+            color: #fc8181;
+        }
+
+        .card-s .mitigation-list li::before {
+            color: #fc8181;
+        }
+
+        .card-t .stride-header {
+            background: linear-gradient(135deg, rgba(246, 173, 85, 0.1), transparent);
+        }
+
+        .card-t .stride-letter {
+            background: #f6ad5533;
+            color: #f6ad55;
+        }
+
+        .card-t .stride-header-text h3 {
+            color: #f6ad55;
+        }
+
+        .card-t .stride-section h4 {
+            color: #f6ad55;
+        }
+
+        .card-t .mitigation-list li::before {
+            color: #f6ad55;
+        }
+
+        .card-r .stride-header {
+            background: linear-gradient(135deg, rgba(246, 224, 94, 0.1), transparent);
+        }
+
+        .card-r .stride-letter {
+            background: #f6e05e33;
+            color: #f6e05e;
+        }
+
+        .card-r .stride-header-text h3 {
+            color: #f6e05e;
+        }
+
+        .card-r .stride-section h4 {
+            color: #f6e05e;
+        }
+
+        .card-r .mitigation-list li::before {
+            color: #f6e05e;
+        }
+
+        .card-i .stride-header {
+            background: linear-gradient(135deg, rgba(104, 211, 145, 0.1), transparent);
+        }
+
+        .card-i .stride-letter {
+            background: #68d39133;
+            color: #68d391;
+        }
+
+        .card-i .stride-header-text h3 {
+            color: #68d391;
+        }
+
+        .card-i .stride-section h4 {
+            color: #68d391;
+        }
+
+        .card-i .mitigation-list li::before {
+            color: #68d391;
+        }
+
+        .card-d .stride-header {
+            background: linear-gradient(135deg, rgba(99, 179, 237, 0.1), transparent);
+        }
+
+        .card-d .stride-letter {
+            background: #63b3ed33;
+            color: #63b3ed;
+        }
+
+        .card-d .stride-header-text h3 {
+            color: #63b3ed;
+        }
+
+        .card-d .stride-section h4 {
+            color: #63b3ed;
+        }
+
+        .card-d .mitigation-list li::before {
+            color: #63b3ed;
+        }
+
+        .card-e .stride-header {
+            background: linear-gradient(135deg, rgba(183, 148, 244, 0.1), transparent);
+        }
+
+        .card-e .stride-letter {
+            background: #b794f433;
+            color: #b794f4;
+        }
+
+        .card-e .stride-header-text h3 {
+            color: #b794f4;
+        }
+
+        .card-e .stride-section h4 {
+            color: #b794f4;
+        }
+
+        .card-e .mitigation-list li::before {
+            color: #b794f4;
+        }
+
+        /* Process Flow */
+        .process-flow {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .process-step {
+            background: linear-gradient(135deg, #1a2332, #1e293b);
+            border: 1px solid #2d3a4f;
+            border-radius: 12px;
+            padding: 20px 16px;
+            min-width: 200px;
+            flex: 1;
+            position: relative;
+            text-align: center;
+        }
+
+        .process-step .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #63b3ed, #4299e1);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            margin: 0 auto 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .process-step h4 {
+            font-size: 12px;
+            font-weight: 700;
+            color: #63b3ed;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .process-step ul {
+            list-style: none;
+            text-align: left;
+        }
+
+        .process-step ul li {
+            font-size: 10px;
+            color: #a0aec0;
+            padding: 2px 0 2px 12px;
+            position: relative;
+        }
+
+        .process-step ul li::before {
+            content: '›';
+            position: absolute;
+            left: 2px;
+            color: #63b3ed;
+            font-weight: 700;
+        }
+
+        .process-arrow {
+            display: flex;
+            align-items: center;
+            color: #4a5568;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        /* Matrix */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .matrix-table th {
+            background: #1a2332;
+            color: #63b3ed;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #2d3a4f;
+        }
+
+        .matrix-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #1e2d4a;
+            vertical-align: top;
+            color: #a0aec0;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .matrix-table tr:hover td {
+            background: rgba(99, 179, 237, 0.03);
+        }
+
+        .matrix-table .letter-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 18px;
+            width: 50px;
+            text-align: center;
+        }
+
+        /* Summary Banner */
+        .summary-banner {
+            background: linear-gradient(135deg, #0d1225, #111a33);
+            border: 1px solid #1e2d4a;
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .stride-summary-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid #1e2d4a10;
+        }
+
+        .stride-summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-letter {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .summary-connector {
+            flex: 1;
+            height: 2px;
+            background: repeating-linear-gradient(90deg, #2d3a4f 0px, #2d3a4f 6px, transparent 6px, transparent 12px);
+            min-width: 40px;
+        }
+
+        .summary-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+            min-width: 160px;
+        }
+
+        .summary-question {
+            font-size: 12px;
+            color: #718096;
+            font-style: italic;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .summary-property {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            min-width: 160px;
+            text-align: right;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid #1e2d4a;
+        }
+
+        .footer-note p {
+            font-size: 11px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .component-full {
+            max-width: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="download-bar">
+        <h3>📊 STRIDE Threat Model Diagram</h3>
+        <button class="btn-download" id="downloadBtn" onclick="downloadDiagram()">
+            ⬇ Download as PNG
+        </button>
+    </div>
+
+    <div id="diagram">
+
+        <!-- Title -->
+        <div class="main-title">
+            <h1>STRIDE THREAT MODELING</h1>
+            <div class="subtitle">Comprehensive Flow Diagram for System Security</div>
+            <div class="desc">A systematic approach to identifying threats across every layer of a general enterprise
+                architecture</div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 1: Architecture -->
+        <div class="section-title">
+            1 &nbsp; GENERAL SYSTEM ARCHITECTURE
+            <span>Data Flow Diagram with Trust Boundaries and STRIDE Threat Surface Mapping</span>
+        </div>
+
+        <div class="arch-container">
+
+            <!-- External Zone -->
+            <div class="trust-boundary tb-external">
+                <div class="tb-label">TB-0 &nbsp; EXTERNAL / UNTRUSTED ZONE</div>
+                <div class="component-row">
+                    <div class="component">
+                        <div class="comp-icon">👤</div>
+                        <div class="comp-name">External User</div>
+                        <div class="comp-detail">Browser / Desktop Client</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-r">R</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">📱</div>
+                        <div class="comp-name">API Consumer</div>
+                        <div class="comp-detail">Mobile / IoT / App</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-r">R</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">🔗</div>
+                        <div class="comp-name">Third-Party Service</div>
+                        <div class="comp-detail">Partner Feeds / Payment GW</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">▼ ▼ ▼<span>DF-1 (HTTPS) &nbsp;|&nbsp; DF-2 (API) &nbsp;|&nbsp; DF-3 (Webhook)</span>
+            </div>
+
+            <!-- DMZ -->
+            <div class="trust-boundary tb-dmz">
+                <div class="tb-label">TB-1 &nbsp; DMZ / PERIMETER</div>
+                <div class="component-row">
+                    <div class="component wide-component component-full">
+                        <div class="comp-icon">🛡️</div>
+                        <div class="comp-name">Firewall / WAF / IDS-IPS</div>
+                        <div class="comp-detail">Packet Inspection • Rate Limiting • Signature Detection</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-arrow">▼<span>Filtered Traffic</span></div>
+                <div class="component-row">
+                    <div class="component wide-component component-full">
+                        <div class="comp-icon">⚖️</div>
+                        <div class="comp-name">Load Balancer / Reverse Proxy</div>
+                        <div class="comp-detail">TLS Termination • Traffic Distribution • Health Checks</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">▼<span>DF-4 (Internal HTTPS)</span></div>
+
+            <!-- Application Zone -->
+            <div class="trust-boundary tb-app">
+                <div class="tb-label">TB-2 &nbsp; APPLICATION ZONE</div>
+                <div class="component-row">
+                    <div class="component">
+                        <div class="comp-icon">🌐</div>
+                        <div class="comp-name">Web App Server</div>
+                        <div class="comp-detail">Frontend Rendering • Session Mgmt</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">🔌</div>
+                        <div class="comp-name">API Gateway</div>
+                        <div class="comp-detail">REST/GraphQL • Routing • Validation</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow">▼<span>DF-5 / DF-6</span></div>
+
+                <div class="component-row">
+                    <div class="component wide-component component-full">
+                        <div class="comp-icon">🔐</div>
+                        <div class="comp-name">Authentication &amp; Authorization Service</div>
+                        <div class="comp-detail">OAuth 2.0 / OIDC / SAML • MFA • RBAC / ABAC • Token Issuance • Policy
+                            Engine</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow">▼<span>DF-7 (Authenticated Context)</span></div>
+
+                <div class="component-row">
+                    <div class="component">
+                        <div class="comp-icon">⚙️</div>
+                        <div class="comp-name">Microservice A</div>
+                        <div class="comp-detail">User Profile Service</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">⚙️</div>
+                        <div class="comp-name">Microservice B</div>
+                        <div class="comp-detail">Order Processing</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">⚙️</div>
+                        <div class="comp-name">Microservice C</div>
+                        <div class="comp-detail">Reporting / Analytics</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">▼ ▼ ▼<span>DF-8 / DF-9 / DF-10</span></div>
+
+            <!-- Data Zone -->
+            <div class="trust-boundary tb-data">
+                <div class="tb-label">TB-3 &nbsp; DATA ZONE</div>
+                <div class="component-row">
+                    <div class="component">
+                        <div class="comp-icon">🗄️</div>
+                        <div class="comp-name">Primary Database</div>
+                        <div class="comp-detail">SQL/NoSQL • PII/PHI/Financial</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">⚡</div>
+                        <div class="comp-name">Cache / Session Store</div>
+                        <div class="comp-detail">Redis / Memcached</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">📁</div>
+                        <div class="comp-name">File / Object Storage</div>
+                        <div class="comp-detail">S3 / Blob / NFS</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">📨</div>
+                        <div class="comp-name">Message Queue</div>
+                        <div class="comp-detail">Kafka / RabbitMQ</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Management Zone -->
+            <div class="trust-boundary tb-mgmt">
+                <div class="tb-label">TB-4 &nbsp; MANAGEMENT / OPERATIONS ZONE</div>
+                <div class="component-row">
+                    <div class="component">
+                        <div class="comp-icon">🖥️</div>
+                        <div class="comp-name">Admin Console</div>
+                        <div class="comp-detail">Management Portal</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">📊</div>
+                        <div class="comp-name">SIEM / Log Aggregator</div>
+                        <div class="comp-detail">Splunk / ELK / Sentinel</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                        </div>
+                    </div>
+                    <div class="component">
+                        <div class="comp-icon">🔄</div>
+                        <div class="comp-name">CI/CD Pipeline</div>
+                        <div class="comp-detail">Jenkins / GitLab / Terraform</div>
+                        <div class="stride-tags">
+                            <span class="stride-tag tag-s">S</span>
+                            <span class="stride-tag tag-t">T</span>
+                            <span class="stride-tag tag-r">R</span>
+                            <span class="stride-tag tag-i">I</span>
+                            <span class="stride-tag tag-d">D</span>
+                            <span class="stride-tag tag-e">E</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 2: STRIDE Detail Cards -->
+        <div class="section-title">
+            2 &nbsp; STRIDE ELEMENT DEEP DIVE
+            <span>Threat Scenarios, Attack Vectors, System Locations, and Mitigations for Each Element</span>
+        </div>
+
+        <div class="stride-grid">
+
+            <!-- S Card -->
+            <div class="stride-card card-s">
+                <div class="stride-header">
+                    <div class="stride-letter">S</div>
+                    <div class="stride-header-text">
+                        <h3>SPOOFING</h3>
+                        <div class="property">Property Violated: Authentication</div>
+                        <div class="question">"Can an attacker pretend to be someone or something else?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>Credential stuffing &amp; brute-force attacks</li>
+                            <li>Phishing / social engineering campaigns</li>
+                            <li>Session hijacking &amp; token replay</li>
+                            <li>Man-in-the-Middle (MITM) interception</li>
+                            <li>Certificate forgery / DNS spoofing</li>
+                            <li>API key theft &amp; OAuth token manipulation</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">TB-0→TB-1</span>
+                            <span class="where-tag">DF-1/DF-2</span>
+                            <span class="where-tag">Auth Service</span>
+                            <span class="where-tag">Admin Console</span>
+                            <span class="where-tag">CI/CD</span>
+                            <span class="where-tag">Cache Store</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>Multi-Factor Authentication (MFA) at all entry points</li>
+                            <li>Mutual TLS (mTLS) for service-to-service communication</li>
+                            <li>Strong password policies + account lockout mechanisms</li>
+                            <li>OAuth 2.0 / OIDC federation with short-lived JWT tokens</li>
+                            <li>Certificate pinning + DNSSEC</li>
+                            <li>API key rotation + IP allowlisting for admin access</li>
+                            <li>Hardware Security Modules (HSM/TPM)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- T Card -->
+            <div class="stride-card card-t">
+                <div class="stride-header">
+                    <div class="stride-letter">T</div>
+                    <div class="stride-header-text">
+                        <h3>TAMPERING</h3>
+                        <div class="property">Property Violated: Integrity</div>
+                        <div class="question">"Can an attacker modify data in transit, at rest, or in processing?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>SQL / NoSQL injection attacks</li>
+                            <li>Cross-Site Scripting (XSS) – stored/reflected</li>
+                            <li>Parameter &amp; request tampering</li>
+                            <li>Man-in-the-Middle data modification</li>
+                            <li>XML/JSON injection &amp; deserialization attacks</li>
+                            <li>Supply chain attacks (CI/CD pipeline poisoning)</li>
+                            <li>Log injection / truncation</li>
+                            <li>Binary patching &amp; code injection</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">ALL Data Flows</span>
+                            <span class="where-tag">TB-2→TB-3</span>
+                            <span class="where-tag">Database</span>
+                            <span class="where-tag">File Storage</span>
+                            <span class="where-tag">Message Queue</span>
+                            <span class="where-tag">CI/CD</span>
+                            <span class="where-tag">SIEM/Logs</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>Input validation + output encoding (parameterized queries)</li>
+                            <li>Digital signatures + HMAC on all critical data flows</li>
+                            <li>TLS 1.3 everywhere (encrypt in transit)</li>
+                            <li>Database integrity constraints + checksums</li>
+                            <li>Code signing for CI/CD artifacts + SBOM</li>
+                            <li>Immutable infrastructure (containers + IaC)</li>
+                            <li>Write-once append-only log storage (WORM)</li>
+                            <li>File Integrity Monitoring (FIM)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- R Card -->
+            <div class="stride-card card-r">
+                <div class="stride-header">
+                    <div class="stride-letter">R</div>
+                    <div class="stride-header-text">
+                        <h3>REPUDIATION</h3>
+                        <div class="property">Property Violated: Non-Repudiation</div>
+                        <div class="question">"Can an attacker deny performing an action without being disproved?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>Log deletion / manipulation / injection</li>
+                            <li>Insufficient or absent audit logging</li>
+                            <li>Using shared / generic accounts</li>
+                            <li>Timestamp manipulation &amp; clock skew exploitation</li>
+                            <li>Anti-forensics techniques</li>
+                            <li>Claiming session was hijacked (plausible deniability)</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">DF-1/DF-2 (User actions)</span>
+                            <span class="where-tag">Auth Service</span>
+                            <span class="where-tag">Business Logic</span>
+                            <span class="where-tag">Admin Console</span>
+                            <span class="where-tag">CI/CD</span>
+                            <span class="where-tag">SIEM/Logs</span>
+                            <span class="where-tag">Message Queue</span>
+                            <span class="where-tag">Database</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>Comprehensive audit logging (Who, What, When, Where, From Where)</li>
+                            <li>Centralized SIEM with tamper-evident, write-once storage</li>
+                            <li>Digital signatures on critical transactions</li>
+                            <li>NTP synchronization for accurate timestamps</li>
+                            <li>Unique identity per user/service (no shared accounts)</li>
+                            <li>Database transaction logging (CDC / triggers)</li>
+                            <li>Secure Timestamping Authority (TSA)</li>
+                            <li>Blockchain / Merkle tree based audit chains</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- I Card -->
+            <div class="stride-card card-i">
+                <div class="stride-header">
+                    <div class="stride-letter">I</div>
+                    <div class="stride-header-text">
+                        <h3>INFORMATION DISCLOSURE</h3>
+                        <div class="property">Property Violated: Confidentiality</div>
+                        <div class="question">"Can an attacker access data they are not authorized to see?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>Network sniffing / eavesdropping</li>
+                            <li>Directory traversal &amp; path manipulation</li>
+                            <li>IDOR (Insecure Direct Object Reference)</li>
+                            <li>Verbose error messages / stack trace exposure</li>
+                            <li>Side-channel &amp; timing attacks</li>
+                            <li>Memory scraping (Heartbleed-type vulnerabilities)</li>
+                            <li>Cloud storage misconfiguration (public buckets)</li>
+                            <li>API over-exposure (excessive data in responses)</li>
+                            <li>Backup exposure &amp; credential leakage</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">DF-1/DF-2 (if weak encryption)</span>
+                            <span class="where-tag">DF-8/DF-9/DF-10</span>
+                            <span class="where-tag">Database</span>
+                            <span class="where-tag">File Storage</span>
+                            <span class="where-tag">Cache Store</span>
+                            <span class="where-tag">SIEM/Logs</span>
+                            <span class="where-tag">Load Balancer (headers)</span>
+                            <span class="where-tag">Error Responses</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>Encryption at rest (AES-256) + in transit (TLS 1.3)</li>
+                            <li>Data classification + labeling + masking/tokenization</li>
+                            <li>Data Loss Prevention (DLP) at network + host level</li>
+                            <li>Secrets management (Vault / KMS / HSM)</li>
+                            <li>Least privilege data access on need-to-know basis</li>
+                            <li>API response filtering + field-level encryption</li>
+                            <li>Secure error handling (no stack traces or debug info)</li>
+                            <li>Network segmentation + micro-segmentation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D Card -->
+            <div class="stride-card card-d">
+                <div class="stride-header">
+                    <div class="stride-letter">D</div>
+                    <div class="stride-header-text">
+                        <h3>DENIAL OF SERVICE</h3>
+                        <div class="property">Property Violated: Availability</div>
+                        <div class="question">"Can an attacker crash the system or make it unusable?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>Volumetric DDoS (UDP/ICMP/SYN floods)</li>
+                            <li>Application-layer DoS (Slowloris, HTTP floods)</li>
+                            <li>Resource exhaustion (CPU / Memory / Disk / Connections)</li>
+                            <li>Algorithmic complexity attacks (Hash DoS)</li>
+                            <li>XML bomb / Billion Laughs attack</li>
+                            <li>ReDoS (Regular Expression Denial of Service)</li>
+                            <li>Zip bombs / decompression bombs</li>
+                            <li>Cascading failure / thundering herd</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">TB-0→TB-1 (Internet→Perimeter)</span>
+                            <span class="where-tag">Firewall/WAF</span>
+                            <span class="where-tag">Load Balancer</span>
+                            <span class="where-tag">Web App / API GW</span>
+                            <span class="where-tag">Auth Service (lockout)</span>
+                            <span class="where-tag">Database (connections)</span>
+                            <span class="where-tag">Message Queue</span>
+                            <span class="where-tag">File Storage (disk full)</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>CDN + DDoS protection (Cloudflare / Akamai / AWS Shield)</li>
+                            <li>Rate limiting + throttling at API GW + WAF + per-user quotas</li>
+                            <li>Auto-scaling + load balancing + multi-AZ redundancy</li>
+                            <li>Circuit breaker pattern + bulkhead isolation</li>
+                            <li>Resource quotas + limits (CPU/Mem/Disk/Connections)</li>
+                            <li>Connection pooling + timeout configuration</li>
+                            <li>Health checks + monitoring + alerting + auto-recovery</li>
+                            <li>Graceful degradation + failover strategies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- E Card -->
+            <div class="stride-card card-e">
+                <div class="stride-header">
+                    <div class="stride-letter">E</div>
+                    <div class="stride-header-text">
+                        <h3>ELEVATION OF PRIVILEGE</h3>
+                        <div class="property">Property Violated: Authorization</div>
+                        <div class="question">"Can an attacker gain capabilities they should not have?"</div>
+                    </div>
+                </div>
+                <div class="stride-body">
+                    <div class="stride-section">
+                        <h4>⚠ Attack Vectors</h4>
+                        <ul class="threat-list">
+                            <li>Broken access control (OWASP #1)</li>
+                            <li>JWT / token manipulation &amp; IDOR exploitation</li>
+                            <li>Role parameter tampering</li>
+                            <li>Kernel / OS privilege escalation exploits</li>
+                            <li>Container escape (Docker breakout)</li>
+                            <li>Dependency / library vulnerabilities</li>
+                            <li>Misconfigured RBAC / ABAC policies</li>
+                            <li>SQL injection → OS command execution</li>
+                            <li>Insecure deserialization → Remote Code Execution</li>
+                        </ul>
+                    </div>
+                    <div class="stride-section">
+                        <h4>📍 Where in System</h4>
+                        <div class="where-tags">
+                            <span class="where-tag">Auth/AuthZ Service</span>
+                            <span class="where-tag">Web App / API GW</span>
+                            <span class="where-tag">Business Logic Tier</span>
+                            <span class="where-tag">Admin Console</span>
+                            <span class="where-tag">CI/CD Pipeline</span>
+                            <span class="where-tag">TB-2→TB-4</span>
+                            <span class="where-tag">Database (stored procs)</span>
+                        </div>
+                    </div>
+                    <div class="stride-section">
+                        <h4>✓ Mitigations</h4>
+                        <ul class="mitigation-list">
+                            <li>Principle of Least Privilege (PoLP) for all accounts + services</li>
+                            <li>Role-Based + Attribute-Based Access Control (RBAC + ABAC)</li>
+                            <li>Server-side authorization enforcement (never trust client)</li>
+                            <li>Regular privilege audit + access reviews</li>
+                            <li>Container hardening + non-root execution</li>
+                            <li>Sandboxing + Seccomp + AppArmor / SELinux profiles</li>
+                            <li>Vulnerability management + patch management + dependency scanning</li>
+                            <li>Zero Trust Architecture (verify every request)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 3: Process Flow -->
+        <div class="section-title">
+            3 &nbsp; THREAT MODELING LIFECYCLE PROCESS
+            <span>Six-Phase Iterative Methodology for Continuous Threat Assessment</span>
+        </div>
+
+        <div class="process-flow">
+            <div class="process-step">
+                <div class="step-num">1</div>
+                <h4>System Decomposition</h4>
+                <ul>
+                    <li>Identify all assets &amp; components</li>
+                    <li>Map data flows (DF-1…DF-n)</li>
+                    <li>Define trust boundaries</li>
+                    <li>Create DFD (Level 0, 1, 2)</li>
+                    <li>Identify entry/exit points</li>
+                    <li>Catalog data sensitivity</li>
+                </ul>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-num">2</div>
+                <h4>Threat Enumeration</h4>
+                <ul>
+                    <li>Apply STRIDE per element</li>
+                    <li>External Entities → S, R</li>
+                    <li>Processes → S,T,R,I,D,E</li>
+                    <li>Data Stores → T, I, D</li>
+                    <li>Data Flows → T, I, D</li>
+                    <li>Trust Boundary crossings</li>
+                </ul>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-num">3</div>
+                <h4>Risk Assessment</h4>
+                <ul>
+                    <li>Likelihood × Impact scoring</li>
+                    <li>DREAD or CVSS rating</li>
+                    <li>Prioritize by risk level</li>
+                    <li>Critical / High / Med / Low</li>
+                    <li>Map to business impact</li>
+                    <li>Regulatory implications</li>
+                </ul>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-num">4</div>
+                <h4>Mitigation Strategy</h4>
+                <ul>
+                    <li>MITIGATE → Apply controls</li>
+                    <li>TRANSFER → Insurance/outsource</li>
+                    <li>AVOID → Remove feature</li>
+                    <li>ACCEPT → Document risk</li>
+                    <li>Defense-in-depth layering</li>
+                    <li>Control effectiveness testing</li>
+                </ul>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-num">5</div>
+                <h4>Validation</h4>
+                <ul>
+                    <li>Penetration testing per STRIDE</li>
+                    <li>Security code review</li>
+                    <li>SAST / DAST / SCA scanning</li>
+                    <li>Red team exercises</li>
+                    <li>Threat model review board</li>
+                    <li>Compliance validation</li>
+                </ul>
+            </div>
+            <div class="process-arrow">→</div>
+            <div class="process-step">
+                <div class="step-num">6</div>
+                <h4>Continuous Monitoring</h4>
+                <ul>
+                    <li>SIEM alerts → STRIDE mapping</li>
+                    <li>Update model per release</li>
+                    <li>Threat intel integration</li>
+                    <li>Incident response feedback</li>
+                    <li>Compliance audit alignment</li>
+                    <li>↩ Loop back to Phase 1</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 4: Cross-Reference Matrix -->
+        <div class="section-title">
+            4 &nbsp; STRIDE SECURITY PROPERTIES CROSS-REFERENCE
+            <span>Mapping Each Element to Security Principle, Desired State, and Verification Method</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px">STRIDE</th>
+                        <th>Element</th>
+                        <th>Security Property</th>
+                        <th>Violated Principle</th>
+                        <th>Desired State</th>
+                        <th>Verification Method</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="letter-cell" style="color:#fc8181">S</td>
+                        <td style="color:#fc8181; font-weight:600">Spoofing</td>
+                        <td>Authentication</td>
+                        <td>Identity verification bypassed</td>
+                        <td>Every entity verified before access granted</td>
+                        <td>Auth penetration testing, credential stuffing tests, MFA audit</td>
+                    </tr>
+                    <tr>
+                        <td class="letter-cell" style="color:#f6ad55">T</td>
+                        <td style="color:#f6ad55; font-weight:600">Tampering</td>
+                        <td>Integrity</td>
+                        <td>Data or code modified without detection</td>
+                        <td>All data verified for integrity at every boundary</td>
+                        <td>FIM, checksum validation, SAST/DAST, injection testing</td>
+                    </tr>
+                    <tr>
+                        <td class="letter-cell" style="color:#f6e05e">R</td>
+                        <td style="color:#f6e05e; font-weight:600">Repudiation</td>
+                        <td>Non-Repudiation</td>
+                        <td>Actions cannot be attributed to an actor</td>
+                        <td>Every action is attributable &amp; provable</td>
+                        <td>Log review, audit trail verification, forensic readiness assessment</td>
+                    </tr>
+                    <tr>
+                        <td class="letter-cell" style="color:#68d391">I</td>
+                        <td style="color:#68d391; font-weight:600">Info Disclosure</td>
+                        <td>Confidentiality</td>
+                        <td>Unauthorized data exposure</td>
+                        <td>Data accessible only to authorized parties</td>
+                        <td>DLP testing, encryption validation, access control reviews</td>
+                    </tr>
+                    <tr>
+                        <td class="letter-cell" style="color:#63b3ed">D</td>
+                        <td style="color:#63b3ed; font-weight:600">Denial of Service</td>
+                        <td>Availability</td>
+                        <td>System/service becomes unavailable</td>
+                        <td>System remains available under adverse conditions</td>
+                        <td>Load testing, chaos engineering, DDoS simulation, failover tests</td>
+                    </tr>
+                    <tr>
+                        <td class="letter-cell" style="color:#b794f4">E</td>
+                        <td style="color:#b794f4; font-weight:600">Elevation of Privilege</td>
+                        <td>Authorization</td>
+                        <td>Unauthorized capability gain</td>
+                        <td>Users/services operate only within granted scope</td>
+                        <td>Privilege escalation testing, RBAC review, container breakout tests</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 5: Summary -->
+        <div class="section-title">
+            5 &nbsp; STRIDE AT A GLANCE
+            <span>Quick-Reference Summary of All Six Threat Categories</span>
+        </div>
+
+        <div class="summary-banner">
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#fc818133; color:#fc8181;">S</div>
+                <div class="summary-text" style="color:#fc8181;">SPOOFING</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"WHO are you?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#fc8181;">AUTHENTICATION</div>
+            </div>
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#f6ad5533; color:#f6ad55;">T</div>
+                <div class="summary-text" style="color:#f6ad55;">TAMPERING</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"Is this UNCHANGED?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#f6ad55;">INTEGRITY</div>
+            </div>
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#f6e05e33; color:#f6e05e;">R</div>
+                <div class="summary-text" style="color:#f6e05e;">REPUDIATION</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"Can you PROVE it?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#f6e05e;">NON-REPUDIATION</div>
+            </div>
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#68d39133; color:#68d391;">I</div>
+                <div class="summary-text" style="color:#68d391;">INFO DISCLOSURE</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"Who can SEE this?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#68d391;">CONFIDENTIALITY</div>
+            </div>
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#63b3ed33; color:#63b3ed;">D</div>
+                <div class="summary-text" style="color:#63b3ed;">DENIAL OF SERVICE</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"Is it AVAILABLE?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#63b3ed;">AVAILABILITY</div>
+            </div>
+            <div class="stride-summary-row">
+                <div class="summary-letter" style="background:#b794f433; color:#b794f4;">E</div>
+                <div class="summary-text" style="color:#b794f4;">ELEVATION OF PRIV.</div>
+                <div class="summary-connector"></div>
+                <div class="summary-question">"Are you ALLOWED?"</div>
+                <div class="summary-connector"></div>
+                <div class="summary-property" style="color:#b794f4;">AUTHORIZATION</div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <p>
+                STRIDE Threat Modeling Framework — Originally developed by Microsoft<br>
+                This diagram provides a repeatable, auditable framework for systematically identifying, assessing, and
+                mitigating threats across every layer of a general enterprise system.<br>
+                <strong style="color:#63b3ed;">Threat modeling is iterative:</strong> every architecture change,
+                deployment, or incident should trigger a threat model review cycle.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        function downloadDiagram() {
+            const btn = document.getElementById('downloadBtn');
+            btn.textContent = '⏳ Generating PNG...';
+            btn.classList.add('downloading');
+
+            const element = document.getElementById('diagram');
+
+            html2canvas(element, {
+                backgroundColor: '#0a0e1a',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                width: element.scrollWidth,
+                height: element.scrollHeight,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight
+            }).then(function (canvas) {
+                const link = document.createElement('a');
+                link.download = 'STRIDE_Threat_Model_Flow_Diagram.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                btn.textContent = '✅ Downloaded!';
+                setTimeout(function () {
+                    btn.textContent = '⬇ Download as PNG';
+                    btn.classList.remove('downloading');
+                }, 2500);
+            }).catch(function (err) {
+                console.error('Error:', err);
+                btn.textContent = '⬇ Download as PNG';
+                btn.classList.remove('downloading');
+                alert('Error generating image. Try using browser Print → Save as PDF instead.');
+            });
+        }
+    </script>
+
+</body>
+
+</html>
